@@ -48,7 +48,7 @@ Building Light - → Power Supply GND
 ```
 Arduino Pin 10 → Push Button → GND (using internal pullup)
 
-Arduino Pin 11 → 220Ω Resistor → LED Anode (+)
+Arduino Pin 11 → LED Anode (+)
 LED Cathode (-) → GND
 ```
 
