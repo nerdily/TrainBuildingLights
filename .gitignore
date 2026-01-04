@@ -1,0 +1,12 @@
+# Build directories
+build/
+
+# IDE and system files
+.DS_Store
+.vscode/
+.claude/
+
+# Arduino compiled files
+*.hex
+*.elf
+*.bin
