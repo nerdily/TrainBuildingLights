@@ -11,9 +11,7 @@ This is a simple Arduino project to control my model train layout's building lig
 ## Components
 - Arduino Uno (or compatible board)
 - 8-channel relay module (or individual relays)
-- Momentary push button
-- LED (for button indicator)
-- 220Ω resistor (for button LED)
+- Momentary push button with built-in LED and resistor. Arcade style buttons work well.
 - 5V buck converter (to power Arduino from layout power supply)
 - Jumper wires
 
