@@ -52,6 +52,24 @@ void loop() {
   lastButtonState = buttonState;
 }
 
+// Helper function to blink LED during a delay
+void blinkingDelay(int ms) {
+  const int blinkInterval = 200;  // Toggle LED every 200ms
+  unsigned long startTime = millis();
+  unsigned long lastToggle = startTime;
+  bool ledState = HIGH;
+
+  digitalWrite(BUTTON_LED_PIN, ledState);  // Start with LED on
+
+  while (millis() - startTime < ms) {
+    if (millis() - lastToggle >= blinkInterval) {
+      ledState = !ledState;  // Toggle state
+      digitalWrite(BUTTON_LED_PIN, ledState);
+      lastToggle = millis();
+    }
+  }
+}
+
 void turnOnSequence() {
   int order[NUM_RELAYS];
 
@@ -70,10 +88,8 @@ void turnOnSequence() {
 
   // Turn on relays in random order with random delays
   for (int i = 0; i < NUM_RELAYS; i++) {
+    blinkingDelay(random(500, 3001));  // Random delay 0.5-3 seconds with blinking LED
     digitalWrite(RELAY_PINS[order[i]], LOW);  // Relay ON (active LOW)
-    if (i < NUM_RELAYS - 1) {  // Don't delay after last relay
-      delay(random(0, 3001));  // Random delay 0-3000ms
-    }
   }
 }
 
@@ -95,9 +111,7 @@ void turnOffSequence() {
 
   // Turn off relays in random order with random delays
   for (int i = 0; i < NUM_RELAYS; i++) {
+    blinkingDelay(random(500, 3001));  // Random delay 0.5-3 seconds with blinking LED
     digitalWrite(RELAY_PINS[order[i]], HIGH);  // Relay OFF (active LOW)
-    if (i < NUM_RELAYS - 1) {  // Don't delay after last relay
-      delay(random(0, 3001));  // Random delay 0-3000ms
-    }
   }
 }
