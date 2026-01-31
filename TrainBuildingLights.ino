@@ -9,6 +9,43 @@ bool allOn = false;  // Track if all relays are on or off
 bool lastButtonState = HIGH;
 bool sequenceRunning = false;  // Prevent button presses during sequence
 
+volatile bool ledBlinking = false;  // Controls whether LED should blink (volatile for ISR)
+
+void setupBlinkTimer() {
+  // Configure Timer1 for 200ms interrupt
+  noInterrupts();
+  TCCR1A = 0;
+  TCCR1B = 0;
+  TCNT1 = 0;
+
+  // 16MHz / 1024 prescaler = 15625 Hz
+  // 15625 * 0.2 = 3125 ticks for 200ms
+  OCR1A = 3125;
+
+  TCCR1B |= (1 << WGM12);             // CTC mode
+  TCCR1B |= (1 << CS12) | (1 << CS10); // 1024 prescaler
+  TIMSK1 |= (1 << OCIE1A);            // Enable compare interrupt
+
+  interrupts();
+}
+
+// Timer1 interrupt - toggles LED independently of main code
+ISR(TIMER1_COMPA_vect) {
+  if (ledBlinking) {
+    digitalWrite(BUTTON_LED_PIN, !digitalRead(BUTTON_LED_PIN));
+  }
+}
+
+void startBlinking() {
+  ledBlinking = true;
+  digitalWrite(BUTTON_LED_PIN, HIGH);
+}
+
+void stopBlinking(bool finalState) {
+  ledBlinking = false;
+  digitalWrite(BUTTON_LED_PIN, finalState ? HIGH : LOW);
+}
+
 void setup() {
   // Initialize all relay pins
   for (int i = 0; i < NUM_RELAYS; i++) {
@@ -21,6 +58,7 @@ void setup() {
   digitalWrite(BUTTON_LED_PIN, LOW);  // Button LED OFF
 
   randomSeed(analogRead(0));  // Seed random number generator
+  setupBlinkTimer();
 }
 
 void loop() {
@@ -38,11 +76,11 @@ void loop() {
     if (!allOn) {
       turnOnSequence();
       allOn = true;
-      digitalWrite(BUTTON_LED_PIN, HIGH);  // Button LED ON
+      stopBlinking(true);   // LED stays ON
     } else {
       turnOffSequence();
       allOn = false;
-      digitalWrite(BUTTON_LED_PIN, LOW);  // Button LED OFF
+      stopBlinking(false);  // LED stays OFF
     }
 
     sequenceRunning = false;
@@ -50,24 +88,6 @@ void loop() {
   }
 
   lastButtonState = buttonState;
-}
-
-// Helper function to blink LED during a delay
-void blinkingDelay(int ms) {
-  const int blinkInterval = 200;  // Toggle LED every 200ms
-  unsigned long startTime = millis();
-  unsigned long lastToggle = startTime;
-  bool ledState = HIGH;
-
-  digitalWrite(BUTTON_LED_PIN, ledState);  // Start with LED on
-
-  while (millis() - startTime < ms) {
-    if (millis() - lastToggle >= blinkInterval) {
-      ledState = !ledState;  // Toggle state
-      digitalWrite(BUTTON_LED_PIN, ledState);
-      lastToggle = millis();
-    }
-  }
 }
 
 void turnOnSequence() {
@@ -86,9 +106,11 @@ void turnOnSequence() {
     order[j] = temp;
   }
 
+  startBlinking();
+
   // Turn on relays in random order with random delays
   for (int i = 0; i < NUM_RELAYS; i++) {
-    blinkingDelay(random(500, 3001));  // Random delay 0.5-3 seconds with blinking LED
+    delay(random(500, 3001));  // LED blinks via timer interrupt
     digitalWrite(RELAY_PINS[order[i]], LOW);  // Relay ON (active LOW)
   }
 }
@@ -109,9 +131,11 @@ void turnOffSequence() {
     order[j] = temp;
   }
 
+  startBlinking();
+
   // Turn off relays in random order with random delays
   for (int i = 0; i < NUM_RELAYS; i++) {
-    blinkingDelay(random(500, 3001));  // Random delay 0.5-3 seconds with blinking LED
+    delay(random(500, 3001));  // LED blinks via timer interrupt
     digitalWrite(RELAY_PINS[order[i]], HIGH);  // Relay OFF (active LOW)
   }
 }
